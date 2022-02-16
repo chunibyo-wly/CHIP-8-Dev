@@ -18,6 +18,8 @@ struct Memory {
     // 内存的最大值
     static constexpr Word endMemory = 0xFFF;
 
+    Byte &operator[](Word &address);
+
     // 4KB 大小内存
     // https://en.wikipedia.org/wiki/CHIP-8#Memory
     Byte memory[endMemory + 1]{};
@@ -41,6 +43,8 @@ struct CPU {
     // stack pointer: 8 Bit
     // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.2
     Byte SP{};
+
+    void pcUpdate();
 };
 
 struct CHIP8 {
@@ -51,6 +55,10 @@ struct CHIP8 {
     void reset();
 
     bool loadROM(std::string &file);
+
+    [[noreturn]] void run();
+
+    Word readOperationCode();
 };
 
 

@@ -6,4 +6,5 @@ int main() {
     chip8.init();
     std::string input = "test_opcode.ch8";
     chip8.loadROM(input);
+    chip8.run();
 }

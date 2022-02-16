@@ -21,6 +21,23 @@ bool CHIP8::loadROM(std::string &file) {
     return cpu.memory.loadROM(file);
 }
 
+[[noreturn]] void CHIP8::run() {
+    while (true) {
+        // operation code: 16 bit
+        auto operationCode = readOperationCode();
+    }
+}
+
+Word CHIP8::readOperationCode() {
+    // All instructions are 2 bytes long
+    // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#3.0
+    Word tmp = cpu.memory[cpu.PC] << 8;
+    cpu.pcUpdate();
+    tmp |= cpu.memory[cpu.PC];
+    cpu.pcUpdate();
+    return tmp;
+}
+
 bool Memory::loadROM(std::string &file) {
     // step 1: 计算文件大小
     std::ifstream infile(file);
@@ -39,11 +56,20 @@ bool Memory::loadROM(std::string &file) {
 
     // step 3: char -> unsigned char
     std::memcpy(&memory[pcStartMemory], content, length);
-    std::cout << "ROM loaded" << std::endl;
+    std::cout << "ROM loaded, file size is: " << length << " Byte." << std::endl;
+    delete[] content;
 
     return true;
 }
 
 void Memory::clear() {
     std::fill(std::begin(memory), std::end(memory), 0);
+}
+
+Byte &Memory::operator[](Word &address) {
+    return memory[address];
+}
+
+void CPU::pcUpdate() {
+    PC += 1;
 }
