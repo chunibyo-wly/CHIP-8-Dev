@@ -18,7 +18,7 @@ struct Memory {
     // 内存的最大值
     static constexpr Word endMemory = 0xFFF;
 
-    Byte &operator[](Word &address);
+    Byte &operator[](Word address);
 
     // 4KB 大小内存
     // https://en.wikipedia.org/wiki/CHIP-8#Memory
@@ -32,9 +32,11 @@ struct Memory {
 struct CPU {
     Memory memory;
 
+    static constexpr int registerNum = 16;
+
     // 16个8Bit(1Byte)个大小的寄存器
     // https://en.wikipedia.org/wiki/CHIP-8#Registers
-    Byte VRegister[16]{};
+    Byte VRegister[registerNum]{};
 
     // 程序计数器: 16 Bit
     // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.2
@@ -44,7 +46,14 @@ struct CPU {
     // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.2
     Byte SP{};
 
-    void pcUpdate();
+    Word IRegister{};
+
+    Byte delayTimer;
+
+    Byte soundTimer;
+
+    // The stack is an array of 16 16-bit values
+    Word stack[16];
 };
 
 struct CHIP8 {
@@ -59,6 +68,8 @@ struct CHIP8 {
     [[noreturn]] void run();
 
     Word readOperationCode();
+
+    void processOperationCode(Word &opcode);
 };
 
 
