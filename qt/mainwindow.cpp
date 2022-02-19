@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(windowWidth, windowHeight);
 
     chi8Thread.start();
+    connect(&chi8Thread, &CHI8Thread::displaySignal, this, &MainWindow::updateScreen);
 }
 
 void MainWindow::paintEvent(QPaintEvent *) {
@@ -18,8 +19,12 @@ void MainWindow::paintEvent(QPaintEvent *) {
     qpainter.drawRect(0, 0, width(), height());
 
     qpainter.setBrush(white);
-    paintSmallSquare(1, 2, qpainter);
-    paintSmallSquare(2, 3, qpainter);
+
+    for (int i = 0; i < _height; ++i) {
+        for (int j = 0; j < _width; ++j) {
+            if (_displayMatrix[i][j]) paintSmallSquare(j, i, qpainter);
+        }
+    }
 }
 
 void MainWindow::paintSmallSquare(int left, int top, QPainter &qpainter) {
@@ -28,4 +33,14 @@ void MainWindow::paintSmallSquare(int left, int top, QPainter &qpainter) {
 
 void MainWindow::mousePressEvent(QMouseEvent *e) {
     std::cout << "test" << std::endl;
+}
+
+void MainWindow::updateScreen(const Board &board) {
+    // TODO: 优化：将Board变为指针传过来应该可以避免拷贝
+    for (int i = 0; i < _height; ++i) {
+        for (int j = 0; j < _width; ++j) {
+            _displayMatrix[i][j] = board.data[i][j];
+        }
+    }
+    update();
 }

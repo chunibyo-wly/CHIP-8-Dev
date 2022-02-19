@@ -21,14 +21,22 @@ public:
 
     void paintSmallSquare(int left, int top, QPainter &qpainter);
 
+    void updateScreen(const Board &board);
+
 public:
     static constexpr int squareSize = 20;
 
-    int windowWidth = 64 * squareSize;
+    static constexpr int _width = 64;
 
-    int windowHeight = 32 * squareSize;
+    static constexpr int _height = 32;
+
+    int windowWidth = _width * squareSize;
+
+    int windowHeight = _height * squareSize;
 
     CHI8Thread chi8Thread;
+
+    bool _displayMatrix[_height][_width] = {false};
 
 signals:
 
