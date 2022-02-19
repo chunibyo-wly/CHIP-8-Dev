@@ -18,8 +18,10 @@ set(PROJECT_SOURCES
         main.cpp
         CHIP8.h
         CHIP8.cpp
-        mainwindow.h
-        mainwindow.cpp
+        qt/mainwindow.h
+        qt/mainwindow.cpp
+        qt/chip8thread.h
+        qt/chip8thread.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -2,7 +2,9 @@
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow{parent} {
-    update();
+    setFixedSize(windowWidth, windowHeight);
+
+    chi8Thread.start();
 }
 
 void MainWindow::paintEvent(QPaintEvent *) {
@@ -22,4 +24,8 @@ void MainWindow::paintEvent(QPaintEvent *) {
 
 void MainWindow::paintSmallSquare(int left, int top, QPainter &qpainter) {
     qpainter.drawRect(QRectF(left * squareSize, top * squareSize, squareSize, squareSize));
+}
+
+void MainWindow::mousePressEvent(QMouseEvent *e) {
+    std::cout << "test" << std::endl;
 }

@@ -2,7 +2,7 @@
 #include <QApplication>
 
 #include "CHIP8.h"
-#include "mainwindow.h"
+#include "qt/mainwindow.h"
 
 int main(int argc, char *argv[]) {
 //    CHIP8 chip8;
