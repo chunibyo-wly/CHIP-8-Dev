@@ -15,6 +15,13 @@ void CHIP8::init() {
     cpu.delayTimer = 0;
     cpu.soundTimer = 0;
     cpu.memory.clear();
+
+    for (auto &i : _display->data)
+        std::fill(i, i + 64, 0);
+}
+
+std::shared_ptr<Display> CHIP8::getDisplay() const {
+    return _display;
 }
 
 void CHIP8::reset() {

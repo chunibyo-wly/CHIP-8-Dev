@@ -56,12 +56,34 @@ struct CPU {
     Word stack[16];
 };
 
+struct Display {
+    static constexpr int squareSize = 20;
+
+    static constexpr int width = 64;
+
+    static constexpr int height = 32;
+
+    static int getScreenWidth() { return squareSize * width; }
+
+    static int getScreenHeight() { return squareSize * height; }
+
+    bool data[height][width] = {false};
+};
+
 struct CHIP8 {
     CPU cpu;
+
+    std::shared_ptr<Display> _display;
+
+    CHIP8() {
+        _display = std::make_shared<Display>();
+    };
 
     void init();
 
     void reset();
+
+    std::shared_ptr<Display> getDisplay() const;
 
     bool loadROM(std::string &file);
 
@@ -71,6 +93,5 @@ struct CHIP8 {
 
     void processOperationCode(Word &opcode);
 };
-
 
 #endif //INC_19_CHIP8_CHIP8_H

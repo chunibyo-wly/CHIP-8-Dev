@@ -1,17 +1,14 @@
+#include <QPainter>
 #include "chip8thread.h"
 
-CHI8Thread::CHI8Thread() {
-
+CHIP8Thread::CHIP8Thread() {
+    _display = chip8.getDisplay();
 }
 
-[[noreturn]] void CHI8Thread::run() {
-    std::cout << "asdfsaf" << std::endl;
-    CHIP8 chip8;
+[[noreturn]] void CHIP8Thread::run() {
     chip8.init();
     std::string input = "/Users/chunibyo/01_project/06_open_source/19_CHIP8/test_opcode.ch8";
     chip8.loadROM(input);
-
-    Board board;
 
     while (true) {
         // operation code: 16 bit
@@ -19,10 +16,39 @@ CHI8Thread::CHI8Thread() {
 //        chip8.processOperationCode(operationCode);
 
         srand(time(nullptr));
-        for (auto &i : board.data)
+        for (auto &i : _display->data)
             std::fill(i, i + 64, 0);
-        board.data[rand() % 32][rand() % 64] = true;
-        board.data[rand() % 32][rand() % 64] = true;
-        emit displaySignal(board);
+        _display->data[rand() % 32][rand() % 64] = true;
+        _display->data[rand() % 32][rand() % 64] = true;
+        const auto &tmp = render();
+        QImage qimage = std::move(*(render().get()));
+        emit displaySignal(qimage);
     }
+}
+
+std::shared_ptr<QImage> CHIP8Thread::render() {
+    auto image = std::make_shared<QImage>(
+            QSize(Display::getScreenWidth(), Display::getScreenHeight()), QImage::Format_RGB32);
+    QPainter qpainter(image.get());
+
+    QColor black("black");
+    QColor white("white");
+    qpainter.setBrush(black);
+    qpainter.setPen(Qt::NoPen);
+    qpainter.drawRect(0, 0, Display::getScreenWidth(), Display::getScreenHeight());
+
+    qpainter.setBrush(white);
+
+    for (int i = 0; i < Display::height; ++i) {
+        for (int j = 0; j < Display::width; ++j) {
+            if (_display->data[i][j]) paintSmallSquare(j, i, qpainter);
+        }
+    }
+    return image;
+}
+
+void CHIP8Thread::paintSmallSquare(int left, int top, QPainter &qpainter) {
+    qpainter.drawRect(
+            QRectF(left * Display::squareSize, top * Display::squareSize,
+                   Display::squareSize, Display::squareSize));
 }

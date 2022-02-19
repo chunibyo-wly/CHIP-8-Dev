@@ -19,24 +19,13 @@ public:
 
     void mousePressEvent(QMouseEvent *e) override;
 
-    void paintSmallSquare(int left, int top, QPainter &qpainter);
-
-    void updateScreen(const Board &board);
+    void updateScreen(QImage &qimage);
 
 public:
-    static constexpr int squareSize = 20;
 
-    static constexpr int _width = 64;
+    CHIP8Thread chip8Thread;
 
-    static constexpr int _height = 32;
-
-    int windowWidth = _width * squareSize;
-
-    int windowHeight = _height * squareSize;
-
-    CHI8Thread chi8Thread;
-
-    bool _displayMatrix[_height][_width] = {false};
+    QPixmap pixmap;
 
 signals:
 
