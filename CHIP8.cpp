@@ -47,19 +47,26 @@ Word CHIP8::readOperationCode() {
     return (cpu.memory[cpu.PC] << 8) | cpu.memory[cpu.PC + 1];
 }
 
-void CHIP8::processOperationCode(Word &opcode) {
+bool CHIP8::processOperationCode(Word &opcode) {
     // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#3.1
+    // https://github.com/trapexit/chip-8_documentation/blob/master/README.md
     int temp;
     auto &Vx = cpu.VRegister[(opcode >> 8) & 0x0F];
     auto &Vy = cpu.VRegister[(opcode >> 4) & 0x0F];
     auto &VF = cpu.VRegister[0xF];
     srand(time(nullptr));
 
+    bool shouldVFChange = false;
+    bool shouldUpdateScreen = false;
+
     switch (opcode & 0xF000) {
         case 0x0000:
             switch (opcode) {
                 case 0x00E0:
-                    // TODO: clear screen
+                    for (auto &i : _display->data)
+                        std::fill(i, i + 64, 0);
+                    shouldUpdateScreen = true;
+                    cpu.PC += 2;
                     break;
                 case 0x00EE:
                     // [00EE]
@@ -253,7 +260,20 @@ void CHIP8::processOperationCode(Word &opcode) {
             // If the sprite is positioned so part of it is outside the coordinates of the display,
             // it wraps around to the opposite side of the screen. See instruction 8xy3 for more information on XOR,
             // and section 2.4, Display, for more information on the Chip-8 screen and sprites.
-            // TODO:
+            temp = opcode & 0xF;
+            for (int i = 0; i < temp; ++i) {
+                auto &row = cpu.memory[cpu.IRegister + i];
+
+                for (int j = 0; j < 8; ++j) {
+                    if ((row & (0x80 >> j)) != 0) {
+                        if (_display->data[Vx + i][Vy + j]) shouldVFChange = true;
+                        _display->data[Vx + i][Vy + j] ^= 1;
+                    }
+                }
+            }
+            if (shouldVFChange) VF = 1; else VF = 0;
+            cpu.PC += 2;
+            shouldUpdateScreen = true;
             break;
         case 0xE000:
             switch (opcode & 0xF) {
@@ -281,6 +301,7 @@ void CHIP8::processOperationCode(Word &opcode) {
                     // Wait for a key press, store the value of the key in Vx.
                     // All execution stops until a key is pressed, then the value of that key is stored in Vx.
                     // TODO
+                    cpu.PC += 2;
                     break;
                 case 0x15:
                     // [Fx15]
@@ -310,6 +331,7 @@ void CHIP8::processOperationCode(Word &opcode) {
                     // corresponding to the value of Vx. See section 2.4, Display,
                     // for more information on the Chip-8 hexadecimal font.
                     // TODO
+                    cpu.PC += 2;
                     break;
                 case 0x33:
                     // [Fx33]
@@ -317,6 +339,7 @@ void CHIP8::processOperationCode(Word &opcode) {
                     // The interpreter takes the decimal value of Vx,
                     // and places the hundreds digit in memory at location in I,
                     // the tens digit at location I+1, and the ones digit at location I+2.
+                    // I register does not change
                     cpu.memory[cpu.IRegister] = Vx / 100;
                     cpu.memory[cpu.IRegister + 1] = (Vx / 10) % 10;
                     cpu.memory[cpu.IRegister + 2] = Vx % 10;
@@ -326,10 +349,10 @@ void CHIP8::processOperationCode(Word &opcode) {
                     // [Fx55]
                     // Store registers V0 through Vx in memory starting at location I.
                     // The interpreter copies the values of registers V0 through Vx into memory, starting at the address in I.
+                    // I register dose not change
                     temp = (opcode & 0x0F00) >> 8;
                     for (size_t i = 0; i <= temp; ++i) {
-                        cpu.IRegister += i;
-                        cpu.memory[cpu.IRegister] = cpu.VRegister[i];
+                        cpu.memory[cpu.IRegister + i] = cpu.VRegister[i];
                     }
                     cpu.PC += 2;
                     break;
@@ -349,6 +372,8 @@ void CHIP8::processOperationCode(Word &opcode) {
         default:
             std::cerr << "Unknown opcode!" << std::endl;
     }
+
+    return shouldUpdateScreen;
 }
 
 bool Memory::loadROM(std::string &file) {

@@ -12,17 +12,13 @@ CHIP8Thread::CHIP8Thread() {
 
     while (true) {
         // operation code: 16 bit
-//        auto operationCode = chip8.readOperationCode();
-//        chip8.processOperationCode(operationCode);
+        auto operationCode = chip8.readOperationCode();
+        if (chip8.processOperationCode(operationCode)) {
+            const auto &tmp = render();
+            QImage qimage = std::move(*(render().get()));
+            emit displaySignal(qimage);
+        }
 
-        srand(time(nullptr));
-        for (auto &i : _display->data)
-            std::fill(i, i + 64, 0);
-        _display->data[rand() % 32][rand() % 64] = true;
-        _display->data[rand() % 32][rand() % 64] = true;
-        const auto &tmp = render();
-        QImage qimage = std::move(*(render().get()));
-        emit displaySignal(qimage);
     }
 }
 

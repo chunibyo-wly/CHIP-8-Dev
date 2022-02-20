@@ -91,7 +91,7 @@ struct CHIP8 {
 
     Word readOperationCode();
 
-    void processOperationCode(Word &opcode);
+    bool processOperationCode(Word &opcode);
 };
 
 #endif //INC_19_CHIP8_CHIP8_H
