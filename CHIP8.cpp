@@ -59,6 +59,7 @@ bool CHIP8::processOperationCode(Word &opcode) {
     bool shouldVFChange = false;
     bool shouldUpdateScreen = false;
 
+    cpu.PC += 2;
     switch (opcode & 0xF000) {
         case 0x0000:
             switch (opcode) {
@@ -66,7 +67,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     for (auto &i : _display->data)
                         std::fill(i, i + 64, 0);
                     shouldUpdateScreen = true;
-                    cpu.PC += 2;
                     break;
                 case 0x00EE:
                     // [00EE]
@@ -74,7 +74,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // then subtracts 1 from the stack pointer.
                     cpu.PC = cpu.stack[cpu.SP];
                     cpu.SP--;
-                    cpu.PC += 2;
                     break;
                 default:
                     // TODO: Calls machine code routine
@@ -103,7 +102,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
             if (Vx == (opcode & 0x00FF)) {
                 cpu.PC += 2;
             }
-            cpu.PC += 2;
             break;
         case 0x4000:
             // [4xnn]
@@ -112,7 +110,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
             if (Vx != (opcode & 0x00FF)) {
                 cpu.PC += 2;
             }
-            cpu.PC += 2;
             break;
         case 0x5000:
             // [5xy0]
@@ -121,24 +118,27 @@ bool CHIP8::processOperationCode(Word &opcode) {
             if (Vx == Vy) {
                 cpu.PC += 2;
             }
-            cpu.PC += 2;
             break;
         case 0x6000:
             // [6xkk]
             // Set Vx = kk.
             // The interpreter puts the value kk into register Vx.
             Vx = (opcode & 0x00FF);
-            cpu.PC += 2;
             break;
         case 0x7000:
             // [7xkk]
             // Set Vx = Vx + kk.
             // Adds the value kk to the value of register Vx, then stores the result in Vx.
-            Vx += (opcode & 0x00FF);
-            cpu.PC += 2;
+            Vx = (Vx + opcode) & 0x00FF;
             break;
         case 0x8000:
             switch (opcode & 0x000F) {
+                case 0x0000:
+                    // [8xy0]
+                    // Set Vx = Vy.
+                    // Stores the value of register Vy in register Vx.
+                    Vx = Vy;
+                    break;
                 case 0x0001:
                     // [8xy1]
                     // Set Vx = Vx OR Vy.
@@ -146,7 +146,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // A bitwise OR compares the corresponding bits from two values, and if either bit is 1,
                     // then the same bit in the result is also 1. Otherwise, it is 0.
                     Vx |= Vy;
-                    cpu.PC += 2;
                     break;
                 case 0x0002:
                     // [8xy2]
@@ -155,13 +154,11 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // A bitwise AND compares the corresponding bits from two values, and if both bits are 1,
                     // then the same bit in the result is also 1. Otherwise, it is 0.
                     Vx &= Vy;
-                    cpu.PC += 2;
                     break;
                 case 0x0003:
                     // [8xy3]
                     // Set Vx = Vx XOR Vy.
                     Vx ^= Vy;
-                    cpu.PC += 2;
                     break;
                 case 0x0004:
                     // [8xy4]
@@ -169,23 +166,18 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // The values of Vx and Vy are added together.
                     // If the result is greater than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0.
                     // Only the lowest 8 bits of the result are kept, and stored in Vx.
-                    VF = ((0xFFFF - Vx) < Vy);
+                    VF = ((0xFF - Vx) < Vy);
                     Vx += Vy;
-                    cpu.PC += 2;
+                    Vx &= 0xFF;
                     break;
                 case 0x0005:
                     // [8xy5]
                     // Set Vx = Vx - Vy, set VF = NOT borrow.
                     // If Vx > Vy, then VF is set to 1, otherwise 0.
                     // Then Vy is subtracted from Vx, and the results stored in Vx.
-                    if (Vx > Vy) {
-                        Vx = Vx - Vy;
-                        VF = 1;
-                    } else {
-                        Vx = Vy - Vx;
-                        VF = 0;
-                    }
-                    cpu.PC += 2;
+                    VF = Vx > Vy;
+                    Vx -= Vy;
+                    Vx &= 0xFF;
                     break;
                 case 0x0006:
                     // [8xy6]
@@ -194,30 +186,24 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // Then Vx is divided by 2.
                     VF = Vx & 0x0001;
                     Vx >>= 1;
-                    cpu.PC += 2;
                     break;
                 case 0x0007:
                     // [8xy7]
                     // Set Vx = Vy - Vx, set VF = NOT borrow.
                     // If Vy > Vx, then VF is set to 1, otherwise 0.
                     // Then Vx is subtracted from Vy, and the results stored in Vx.
-                    if (Vy > Vx) {
-                        Vx = Vy - Vx;
-                        VF = 1;
-                    } else {
-                        Vx = Vx - Vy;
-                        VF = 0;
-                    }
-                    cpu.PC += 2;
+                    VF = Vy > Vx;
+                    Vx = Vy - Vx;
+                    Vx &= 0xFF;
                     break;
                 case 0x000E:
                     // [8xyE]
                     // Set Vx = Vx SHL 1.
                     // If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0.
                     // Then Vx is multiplied by 2.
-                    VF = Vx >> 15;
+                    VF = Vx >> 7;
                     Vx <<= 1;
-                    cpu.PC += 2;
+                    Vx &= 0xFF;
                     break;
             }
             break;
@@ -227,14 +213,12 @@ bool CHIP8::processOperationCode(Word &opcode) {
             // The values of Vx and Vy are compared, and if they are not equal,
             // the program counter is increased by 2.
             if (Vx != Vy) cpu.PC += 2;
-            cpu.PC += 2;
             break;
         case 0xA000:
             // [Annn]
             // Set I = nnn.
             // The value of register I is set to nnn.
             cpu.IRegister = opcode & 0x0FFF;
-            cpu.PC += 2;
             break;
         case 0xB000:
             // [Bnnn]
@@ -248,7 +232,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
             // The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk.
             // The results are stored in Vx. See instruction 8xy2 for more information on AND.
             Vx = (rand() % 0xFF) & (opcode & 0xFF);
-            cpu.PC += 2;
             break;
         case 0xD000:
             // [Dxyn]
@@ -272,18 +255,15 @@ bool CHIP8::processOperationCode(Word &opcode) {
                 }
             }
             if (shouldVFChange) VF = 1; else VF = 0;
-            cpu.PC += 2;
             shouldUpdateScreen = true;
             break;
         case 0xE000:
             switch (opcode & 0xF) {
                 case 0xE:
                     if (Vx != 0) cpu.PC += 2;
-                    cpu.PC += 2;
                     break;
                 case 0x1:
                     if (Vx == 0) cpu.PC += 2;
-                    cpu.PC += 2;
                     break;
             }
             break;
@@ -294,35 +274,30 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // Set Vx = delay timer value.
                     // The value of DT is placed into Vx.
                     Vx = cpu.delayTimer;
-                    cpu.PC += 2;
                     break;
                 case 0x0A:
                     // [Fx0A]
                     // Wait for a key press, store the value of the key in Vx.
                     // All execution stops until a key is pressed, then the value of that key is stored in Vx.
                     // TODO
-                    cpu.PC += 2;
                     break;
                 case 0x15:
                     // [Fx15]
                     // Set delay timer = Vx.
                     // DT is set equal to the value of Vx.
                     cpu.delayTimer = Vx;
-                    cpu.PC += 2;
                     break;
                 case 0x18:
                     // [Fx18] 
                     // Set sound timer = Vx.
                     // ST is set equal to the value of Vx.
                     cpu.soundTimer = Vx;
-                    cpu.PC += 2;
                     break;
                 case 0x1E:
                     // [Fx1E]
                     // Set I = I + Vx.
                     // The values of I and Vx are added, and the results are stored in I.
                     cpu.IRegister = cpu.IRegister + Vx;
-                    cpu.PC += 2;
                     break;
                 case 0x29:
                     // [Fx29]
@@ -331,7 +306,7 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // corresponding to the value of Vx. See section 2.4, Display,
                     // for more information on the Chip-8 hexadecimal font.
                     // TODO
-                    cpu.PC += 2;
+                    cpu.IRegister = Vx * 5;
                     break;
                 case 0x33:
                     // [Fx33]
@@ -343,7 +318,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     cpu.memory[cpu.IRegister] = Vx / 100;
                     cpu.memory[cpu.IRegister + 1] = (Vx / 10) % 10;
                     cpu.memory[cpu.IRegister + 2] = Vx % 10;
-                    cpu.PC += 2;
                     break;
                 case 0x55:
                     // [Fx55]
@@ -354,7 +328,6 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     for (size_t i = 0; i <= temp; ++i) {
                         cpu.memory[cpu.IRegister + i] = cpu.VRegister[i];
                     }
-                    cpu.PC += 2;
                     break;
                 case 0x65:
                     // [Fx65]
@@ -362,10 +335,8 @@ bool CHIP8::processOperationCode(Word &opcode) {
                     // The interpreter reads values from memory starting at location I into registers V0 through Vx.
                     temp = (opcode & 0x0F00) >> 8;
                     for (size_t i = 0; i <= temp; ++i) {
-                        cpu.IRegister += i;
-                        cpu.VRegister[i] = cpu.memory[cpu.IRegister];
+                        cpu.VRegister[i] = cpu.memory[cpu.IRegister + i];
                     }
-                    cpu.PC += 2;
                     break;
             }
             break;
