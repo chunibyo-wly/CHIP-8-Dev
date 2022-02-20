@@ -15,6 +15,9 @@ void CHIP8::init() {
     cpu.delayTimer = 0;
     cpu.soundTimer = 0;
     cpu.memory.clear();
+    for (int i = 0; i < 80; i++) {
+        cpu.memory[i] = Display::chip8_fontset[i];
+    }
 
     for (auto &i : _display->data)
         std::fill(i, i + 64, 0);
@@ -249,8 +252,8 @@ bool CHIP8::processOperationCode(Word &opcode) {
 
                 for (int j = 0; j < 8; ++j) {
                     if ((row & (0x80 >> j)) != 0) {
-                        if (_display->data[Vx + i][Vy + j]) shouldVFChange = true;
-                        _display->data[Vx + i][Vy + j] ^= 1;
+                        if (_display->data[Vy + i][Vx + j]) shouldVFChange = true;
+                        _display->data[Vy + i][Vx + j] ^= 1;
                     }
                 }
             }

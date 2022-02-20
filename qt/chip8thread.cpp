@@ -7,7 +7,7 @@ CHIP8Thread::CHIP8Thread() {
 
 [[noreturn]] void CHIP8Thread::run() {
     chip8.init();
-    std::string input = "/Users/chunibyo/01_project/06_open_source/19_CHIP8/test_opcode.ch8";
+    std::string input = "./test_opcode.ch8";
     chip8.loadROM(input);
 
     while (true) {
