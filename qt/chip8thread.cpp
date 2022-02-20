@@ -15,7 +15,7 @@ CHIP8Thread::CHIP8Thread() {
         auto operationCode = chip8.readOperationCode();
         if (chip8.processOperationCode(operationCode)) {
             const auto &tmp = render();
-            QImage qimage = std::move(*(render().get()));
+            QImage qimage(*(render().get()));
             emit displaySignal(qimage);
         }
 
