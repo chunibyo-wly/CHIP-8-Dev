@@ -19,7 +19,7 @@ public:
 
     void mousePressEvent(QMouseEvent *e) override;
 
-    void updateScreen(QImage &qimage);
+    void updateScreen(const QImage &qimage);
 
 public:
 

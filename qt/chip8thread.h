@@ -27,7 +27,7 @@ protected:
 
 signals:
 
-    void displaySignal(QImage &qimage);
+    void displaySignal(QImage qimage);
 };
 
 #endif // CHI8THREAD_H

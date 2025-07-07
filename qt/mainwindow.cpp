@@ -12,7 +12,7 @@ void MainWindow::mousePressEvent(QMouseEvent *e) {
     std::cout << "test" << std::endl;
 }
 
-void MainWindow::updateScreen(QImage &qimage) {
+void MainWindow::updateScreen(const QImage& qimage) {
     pixmap = QPixmap::fromImage(qimage);
     update();
 }

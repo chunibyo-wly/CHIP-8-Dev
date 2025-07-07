@@ -1,4 +1,4 @@
 cmake-build-debug
-test_opcode.ch8
 .idea
 CMakeLists.txt.user
+build

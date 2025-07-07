@@ -7,6 +7,9 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
+#include <string>
+#include <cstring>
 
 typedef unsigned char Byte;
 typedef unsigned short Word;
